@@ -143,7 +143,7 @@ async function odSignIn(cfg){
   const tenantPath=cfg.personal?"consumers":"organizations";
   const params=new URLSearchParams({
     client_id:cfg.clientId,
-    response_type:"token",
+    response_type:"code",
     redirect_uri:window.location.origin+"/od_redirect.html",
     scope:"Files.ReadWrite offline_access",
     response_mode:"fragment",
