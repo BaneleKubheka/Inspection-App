@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>Sewer Inspection App</title>
@@ -133,39 +134,28 @@ function fmtCoord(lat,lng){if(lat==null)return"";return lat.toFixed(5)+"°, "+ln
 // built-in Microsoft Office client_id for public apps,
 // OR the user can supply their own client_id.
 // We use a simple OAuth2 implicit flow via popup redirect.
+let _odToken = null;
 
-let _odToken=null;
-let _odConfig=null;
+const msalInstance = new msal.PublicClientApplication({
+  auth: {
+    clientId: "6b6fa530-0197-4e16-a43d-09c36cfd5532",
+    authority: "https://login.microsoftonline.com/consumers",
+    redirectUri: window.location.origin
+  }
+});
 
-async function odSignIn(cfg){
-  _odConfig=cfg;
-  // Build OAuth2 authorize URL
-  const tenantPath=cfg.personal?"consumers":"organizations";
-  const params=new URLSearchParams({
-    client_id:cfg.clientId,
-    response_type:"code",
-    redirect_uri:window.location.origin+"/od_redirect.html",
-    scope:"Files.ReadWrite offline_access",
-    response_mode:"fragment",
+async function odSignIn() {
+  const loginResponse = await msalInstance.loginPopup({
+    scopes: ["Files.ReadWrite"]
   });
-  const url="https://login.microsoftonline.com/"+tenantPath+"/oauth2/v2.0/authorize?"+params.toString();
-  return new Promise((resolve,reject)=>{
-    const w=window.open(url,"od_auth","width=520,height=620");
-    const timer=setInterval(()=>{
-      try{
-        if(w&&w.location&&w.location.href&&w.location.href.includes(window.location.origin)){
-          const hash=w.location.hash||w.location.search;
-          w.close();clearInterval(timer);
-          const p=new URLSearchParams(hash.replace(/^[#?]/,""));
-          const token=p.get("access_token");
-          if(token){_odToken=token;resolve(token);}
-          else reject(new Error("No token received"));
-        }
-      }catch(e){}
-      if(w&&w.closed){clearInterval(timer);reject(new Error("Auth window closed"));}
-    },300);
-    setTimeout(()=>{clearInterval(timer);reject(new Error("Auth timeout"));},120000);
+
+  const tokenResponse = await msalInstance.acquireTokenSilent({
+    scopes: ["Files.ReadWrite"],
+    account: loginResponse.account
   });
+
+  _odToken = tokenResponse.accessToken;
+  return _odToken;
 }
 
 async function odGet(path){
