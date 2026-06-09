@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+  <meta http-equiv="Pragma" content="no-cache"/>
+  <meta http-equiv="Expires" content="0"/>
+  <title>Sewer Inspection App</title>
+  <link rel="manifest" href="manifest.json?v=10"/>
+  <meta name="theme-color" content="#0f172a"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Inspections"/>
+  <link rel="apple-touch-icon" href="icon.png"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f4f8;}
+    input,textarea,select{font-family:inherit;}
+    .tab-bar{display:flex;background:#1e293b;border-bottom:1px solid #334155;}
+    .tab{flex:1;padding:10px 4px;text-align:center;font-size:11px;font-weight:700;color:#64748b;cursor:pointer;border:none;background:none;letter-spacing:0.05em;text-transform:uppercase;}
+    .tab.active{color:#7dd3fc;border-bottom:2px solid #7dd3fc;}
+    .card{background:#fff;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:14px;}
+    .card-header{background:#0f172a;color:#f1f5f9;padding:9px 16px;font-size:12px;font-weight:700;letter-spacing:0.1em;display:flex;justify-content:space-between;align-items:center;}
+    .card-body{padding:16px 14px;}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    @media(max-width:500px){.form-row{grid-template-columns:1fr;}}
+    .field-label{font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:0.07em;text-transform:uppercase;display:block;margin-bottom:4px;}
+    .field-input{width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:7px;font-size:14px;color:#1e293b;background:#fff;outline:none;}
+    .field-input:read-only{background:#f8fafc;color:#64748b;}
+    .field-input.lo{background:#f0fdf4;border-color:#86efac;}
+    .btn{border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px;padding:9px 16px;}
+    .btn-sm{font-size:11px;padding:5px 10px;}
+    .btn-primary{background:#2563eb;color:#fff;}
+    .btn-dark{background:#334155;color:#f1f5f9;}
+    .btn-ghost{background:transparent;color:#64748b;border:1px solid #e2e8f0;}
+    .btn-danger{background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;}
+    .btn-success{background:#dcfce7;color:#15803d;border:1px solid #86efac;}
+    .btn-orange{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;}
+    .btn:disabled{opacity:0.5;cursor:not-allowed;}
+    .radio-group{display:flex;gap:5px;flex-wrap:wrap;}
+    .radio-pill{padding:6px 12px;border-radius:20px;border:1.5px solid #cbd5e1;background:#f8fafc;font-size:13px;font-weight:600;color:#64748b;cursor:pointer;user-select:none;}
+    .radio-pill.active{border-color:#1d4ed8;background:#eff6ff;color:#1d4ed8;}
+    .badge{background:#22222222;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;}
+    .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f172a;color:#f1f5f9;padding:12px 22px;border-radius:10px;font-size:13px;font-weight:600;z-index:9999;display:flex;gap:10px;align-items:center;box-shadow:0 4px 24px #0005;white-space:nowrap;}
+    .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px;}
+    .photo-thumb{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:#f1f5f9;}
+    .photo-thumb img{width:100%;height:100%;object-fit:cover;}
+    .photo-thumb .del{position:absolute;top:4px;right:4px;background:#dc2626;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .photo-thumb .geo-tag{position:absolute;bottom:0;left:0;right:0;background:#0009;color:#fff;font-size:9px;padding:3px 5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .insp-card{background:#fff;border-radius:10px;border:1px solid #e2e8f0;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;margin-bottom:8px;}
+    .insp-card:hover{border-color:#93c5fd;}
+    .sort-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+    .sort-pill{padding:5px 12px;border-radius:20px;border:1px solid #e2e8f0;background:#fff;font-size:12px;font-weight:600;color:#64748b;cursor:pointer;}
+    .sort-pill.active{background:#1e3a8a;color:#fff;border-color:#1e3a8a;}
+    .group-header{background:#e2e8f0;color:#475569;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:6px 12px;border-radius:6px;margin:10px 0 6px;}
+    .od-bar{display:flex;align-items:center;justify-content:space-between;background:#1e293b;border-radius:7px;padding:7px 12px;margin-top:8px;}
+    .sticky-hdr{position:sticky;top:0;z-index:10;}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- docx generation library -->
+<script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
+<!-- file-saver -->
+<script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<!-- Microsoft Authentication Library (MSAL) for OneDrive login -->
+<script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js" onload="this.dataset.loaded='true'"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONSTANTS & HELPERS
+// ═══════════════════════════════════════════════════════════════
+const INSPECTIONS_KEY="inspections_v4";
+const OD_CONFIG_KEY="od_config_v1";
+
+const DEFAULT_TEMPLATE={
+  id:"default",name:"Sewer Infrastructure (AMP 206)",
+  assetGroup:"CIVIL ASSETS: LAND SIDE",subAssetGroup:"SEWER INFRASTRUCTURE",
+  sections:[
+    {id:"s1",title:"BUILDING / SUPERSTRUCTURE",items:[
+      {id:"s1i1",text:"Is the superstructure kept neat and tidy?"}
+    ]},
+    {id:"s2",title:"MANHOLE COVERS AND FRAMES",items:[
+      {id:"s2i1",text:"Are there any visible signs of deterioration and damage of the manhole covers?"},
+      {id:"s2i2",text:"Does the manhole cover have sufficient number of lifting hooks?"},
+      {id:"s2i3",text:"Is the manhole cover properly aligned with the frame?"},
+      {id:"s2i4",text:"Is the ladder (if present) securely attached and in good working condition?"},
+    ]},
+    {id:"s3",title:"SEWER TANK (SUMP)",items:[
+      {id:"s3i1",text:"Is there any build-up of grit (coarse sandy particles) in the sump?"},
+      {id:"s3i2",text:"Is there an accumulation of grease in the sump?"},
+      {id:"s3i3",text:"Are there visible cracks or leaking joints in the sump structure?"},
+    ]},
+    {id:"s4",title:"PIPELINE",items:[{id:"s4i1",text:"Are there any blockages?"}]},
+    {id:"s5",title:"PUMPS",items:[{id:"s5i1",text:"Does the sump have the required number of pumps operating?"}]},
+    {id:"s6",title:"GENERAL HOUSEKEEPING",items:[
+      {id:"s6i1",text:"Is the area around the pump station free of debris (vegetation, trash, etc.)?"}
+    ]},
+  ],
+  ratingWeights:[
+    {id:"rw1",label:"Manhole covers and frames",weight:15},
+    {id:"rw2",label:"Sewer Tank (Sump)",weight:60},
+    {id:"rw3",label:"Pipelines",weight:20},
+    {id:"rw4",label:"Housekeeping",weight:5},
+  ],
+};
+
+const CONDITION_SCALE=[
+  {range:[1,10],  condition:"Critical",           color:"#dc2626",action:"Immediate Replacement or Urgent Intervention",    repairTime:"Immediate",         maintTime:"N/A"},
+  {range:[11,20], condition:"Very Poor to Unsafe", color:"#ea580c",action:"Priority Replacement or Urgent Intervention",    repairTime:"Within 3 months",   maintTime:"N/A"},
+  {range:[21,30], condition:"Very Poor",           color:"#d97706",action:"Consider Replacement or Urgent Repair",          repairTime:"Within 6 months",   maintTime:"N/A"},
+  {range:[31,40], condition:"Poor",                color:"#ca8a04",action:"Urgent Repair",                                  repairTime:"Within 6 months",   maintTime:"Restart within 12 months"},
+  {range:[41,50], condition:"Fair to Poor",        color:"#a16207",action:"Urgent Repair",                                  repairTime:"Within 12 months",  maintTime:"Restart within 12 months"},
+  {range:[51,60], condition:"Fair",                color:"#65a30d",action:"Repair and Scheduled Maintenance",               repairTime:"Within 12 months",  maintTime:"Restart within 12 months"},
+  {range:[61,70], condition:"Good to Fair",        color:"#16a34a",action:"Scheduled Maintenance and Minor Repairs",        repairTime:"Within 18 months",  maintTime:"On-going"},
+  {range:[71,80], condition:"Good",                color:"#15803d",action:"Scheduled Maintenance and Minor Repairs",        repairTime:"Within 18 months",  maintTime:"On-going"},
+  {range:[81,90], condition:"Perfect to Good",     color:"#0d9488",action:"Regular Monitoring and Preventive Maintenance",  repairTime:"N/A",               maintTime:"On-going"},
+  {range:[91,100],condition:"Perfect",             color:"#0284c7",action:"New or Expansion",                              repairTime:"N/A",               maintTime:"As per Project Plan / Warrantee"},
+];
+
+function uid(){return Math.random().toString(36).slice(2,9);}
+function getCondition(s){if(s==null||isNaN(s))return null;return CONDITION_SCALE.find(c=>s>=c.range[0]&&s<=c.range[1])||null;}
+function calcWeighted(ratings,weights){let n=0,d=0;for(const w of weights){const v=parseFloat(ratings?.[w.id]);if(!isNaN(v)){n+=v*w.weight;d+=w.weight;}}return d?Math.round(n/d):null;}
+function emptyChecks(t){const c={};t.sections.forEach(s=>s.items.forEach(i=>{c[i.id]={answer:"",comment:""};}));return c;}
+function emptyRatings(t){const r={};t.ratingWeights.forEach(w=>{r[w.id]="";});return r;}
+function emptyPrevRatings(t){const r={};t.ratingWeights.forEach(w=>{r[w.id]="";});return r;}
+function lsGet(k,fb){try{const r=localStorage.getItem(k);return r?JSON.parse(r):fb;}catch{return fb;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
+function fmtCoord(lat,lng){if(lat==null)return"";return lat.toFixed(5)+"°, "+lng.toFixed(5)+"°";}
+
+// ═══════════════════════════════════════════════════════════════
+// ONEDRIVE (Microsoft Graph API)
+// Uses MSAL popup login. No od_redirect.html file is required.
+// Your Azure App Registration redirect URI must be the deployed site origin,
+// e.g. https://your-project.pages.dev or https://username.github.io/repo-name.
+
+let _odToken=null;
+let _odConfig=null;
+let _msalInstance=null;
+let _odAccount=null;
+let _msalLoadPromise=null;
+
+function loadScriptOnce(src){
+  return new Promise((resolve,reject)=>{
+    const existing=[...document.scripts].find(s=>s.src===src);
+    if(existing){
+      if(existing.dataset.loaded==="true") return resolve();
+      existing.addEventListener("load",()=>resolve(),{once:true});
+      existing.addEventListener("error",()=>reject(new Error("Failed to load "+src)),{once:true});
+      return;
+    }
+    const script=document.createElement("script");
+    script.src=src;
+    script.async=true;
+    script.onload=()=>{script.dataset.loaded="true";resolve();};
+    script.onerror=()=>reject(new Error("Failed to load "+src));
+    document.head.appendChild(script);
+  });
+}
+
+async function ensureMsalLoaded(){
+  if(window.msal?.PublicClientApplication) return window.msal;
+  if(!_msalLoadPromise){
+    _msalLoadPromise=(async()=>{
+      const sources=[
+        "https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js",
+        "https://unpkg.com/@azure/msal-browser@2.38.3/lib/msal-browser.min.js",
+        "https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"
+      ];
+      let lastErr=null;
+      for(const src of sources){
+        try{
+          await loadScriptOnce(src);
+          if(window.msal?.PublicClientApplication) return window.msal;
+        }catch(e){lastErr=e;}
+      }
+      throw new Error("MSAL could not load. Check your internet connection, browser extensions, or network firewall. "+(lastErr?.message||""));
+    })();
+  }
+  return _msalLoadPromise;
+}
+
+function odAuthority(cfg){
+  return cfg?.personal ? "https://login.microsoftonline.com/consumers" : "https://login.microsoftonline.com/organizations";
+}
+
+function getMsal(cfg){
+  if(!window.msal?.PublicClientApplication) throw new Error("MSAL is not loaded yet. Try again after the page finishes loading.");
+  if(!cfg?.clientId || cfg.clientId === "YOUR_CLIENT_ID") throw new Error("Enter your real Microsoft Application (Client) ID first.");
+  const key = JSON.stringify({clientId:cfg.clientId,personal:!!cfg.personal,origin:window.location.origin});
+  if(_msalInstance && _msalInstance.__key === key) return _msalInstance;
+  _msalInstance = new window.msal.PublicClientApplication({
+    auth:{
+      clientId:cfg.clientId,
+      authority:odAuthority(cfg),
+      redirectUri:window.location.origin,
+      postLogoutRedirectUri:window.location.origin,
+    },
+    cache:{
+      cacheLocation:"localStorage",
+      storeAuthStateInCookie:false,
+    },
+    system:{
+      allowNativeBroker:false,
+    }
+  });
+  _msalInstance.__key = key;
+  return _msalInstance;
+}
+
+async function odSignIn(cfg){
+  _odConfig=cfg;
+  await ensureMsalLoaded();
+  const app=getMsal(cfg);
+  const scopes=["Files.ReadWrite","User.Read"];
+  const existing=app.getAllAccounts();
+  if(existing.length){
+    _odAccount=existing[0];
+    try{
+      const silent=await app.acquireTokenSilent({scopes,account:_odAccount});
+      _odToken=silent.accessToken;
+      return _odToken;
+    }catch(e){}
+  }
+  const login=await app.loginPopup({scopes,prompt:"select_account"});
+  _odAccount=login.account;
+  _odToken=login.accessToken;
+  if(!_odToken){
+    const token=await app.acquireTokenSilent({scopes,account:_odAccount});
+    _odToken=token.accessToken;
+  }
+  if(!_odToken) throw new Error("Microsoft login completed, but no OneDrive token was returned.");
+  return _odToken;
+}
+
+async function ensureODToken(){
+  if(_odToken) return _odToken;
+  if(!_odConfig) throw new Error("OneDrive is not configured.");
+  return odSignIn(_odConfig);
+}
+
+function graphPath(path){
+  return "https://graph.microsoft.com/v1.0"+path;
+}
+
+async function odFetch(path,opts={}){
+  await ensureODToken();
+  const headers={...(opts.headers||{}),Authorization:"Bearer "+_odToken};
+  const res=await fetch(graphPath(path),{...opts,headers});
+  if(res.status===401){
+    _odToken=null;
+    await ensureODToken();
+    headers.Authorization="Bearer "+_odToken;
+    const retry=await fetch(graphPath(path),{...opts,headers});
+    if(!retry.ok) throw new Error(await retry.text() || ("OneDrive error "+retry.status));
+    return retry;
+  }
+  if(!res.ok) throw new Error(await res.text() || ("OneDrive error "+res.status));
+  return res;
+}
+
+async function odGet(path){
+  const res=await odFetch(path);
+  return res.json();
+}
+async function odPut(path,data,contentType){
+  const res=await odFetch(path,{
+    method:"PUT",headers:{"Content-Type":contentType||"application/octet-stream"},body:data
+  });
+  return res.json();
+}
+async function odPost(path,body){
+  const res=await odFetch(path,{
+    method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)
+  });
+  return res.json();
+}
+
+function safePathName(name){
+  return String(name||"file").replace(/[\\/:*?"<>|#%{}~&]/g,"_").slice(0,120);
+}
+
+async function ensureFolder(folderPath){
+  const parts=folderPath.split("/").filter(Boolean);
+  let current="";
+  for(const part of parts){
+    const parent=current;
+    current=current?current+"/"+part:part;
+    try{
+      await odGet("/me/drive/root:/"+encodeURIComponent(current).replace(/%2F/g,"/"));
+    }catch{
+      const endpoint=parent?"/me/drive/root:/"+encodeURIComponent(parent).replace(/%2F/g,"/")+":/children":"/me/drive/root/children";
+      await odPost(endpoint,{name:part,folder:{},"@microsoft.graph.conflictBehavior":"replace"});
+    }
+  }
+}
+
+async function uploadBytesToOD(remotePath,blob,contentType){
+  const cleanPath=remotePath.split("/").map(safePathName).join("/");
+  // Simple upload is reliable up to 4 MB. Use upload session for anything larger.
+  if(blob.size <= 4*1024*1024){
+    return odPut("/me/drive/root:/"+cleanPath+":/content",blob,contentType||blob.type||"application/octet-stream");
+  }
+  const session=await odPost("/me/drive/root:/"+cleanPath+":/createUploadSession",{
+    item:{"@microsoft.graph.conflictBehavior":"replace",name:cleanPath.split("/").pop()}
+  });
+  const chunkSize=320*1024*10; // must be a multiple of 320 KiB
+  let start=0,last=null;
+  while(start < blob.size){
+    const end=Math.min(start+chunkSize,blob.size)-1;
+    const chunk=blob.slice(start,end+1);
+    const res=await fetch(session.uploadUrl,{
+      method:"PUT",
+      headers:{"Content-Length":String(chunk.size),"Content-Range":`bytes ${start}-${end}/${blob.size}`},
+      body:chunk
+    });
+    if(!res.ok && res.status!==202) throw new Error(await res.text() || ("Upload session failed "+res.status));
+    last=await res.json().catch(()=>null);
+    start=end+1;
+  }
+  return last;
+}
+
+function dataUrlToBlob(dataUrl,mimeType){
+  const parts=String(dataUrl).split(",");
+  const meta=parts[0]||"";
+  const b64=parts[1]||parts[0]||"";
+  const mime=mimeType || (meta.match(/data:([^;]+)/)||[])[1] || "application/octet-stream";
+  const byteStr=atob(b64);
+  const ia=new Uint8Array(byteStr.length);
+  for(let i=0;i<byteStr.length;i++) ia[i]=byteStr.charCodeAt(i);
+  return new Blob([ia],{type:mime});
+}
+
+async function saveInspectionToOD(insp){
+  await ensureODToken();
+  await ensureFolder("Inspections App");
+  await ensureFolder("Inspections App/photos");
+
+  const photoCopies=[];
+  for(const ph of (insp.photos||[])){
+    let copy={...ph};
+    if(ph.data && !ph.odUrl){
+      try{
+        const ext=(ph.name||"photo.jpg").split(".").pop()||"jpg";
+        const filename=`${insp.id}_${ph.id||Date.now()}.${safePathName(ext)}`;
+        const blob=dataUrlToBlob(ph.data,ph.mimeType);
+        const uploaded=await uploadBytesToOD(`Inspections App/photos/${filename}`,blob,blob.type);
+        copy.odUrl=uploaded?.webUrl || uploaded?.["@microsoft.graph.downloadUrl"] || null;
+        copy.odName=filename;
+      }catch(e){
+        copy.odError=e.message;
+      }
+    }
+    photoCopies.push(copy);
+  }
+
+  const odRecord={...insp,photos:photoCopies,lastSyncedAt:new Date().toISOString()};
+  const filename="Inspections App/"+safePathName(insp.id)+".json";
+  await odPut("/me/drive/root:/"+filename+":/content",JSON.stringify(odRecord,null,2),"application/json");
+  return odRecord;
+}
+
+async function loadInspectionsFromOD(){
+  await ensureODToken();
+  await ensureFolder("Inspections App");
+  const data=await odGet("/me/drive/root:/Inspections App:/children?$top=999");
+  const files=(data.value||[]).filter(f=>f.name.endsWith(".json"));
+  const results=[];
+  for(const f of files){
+    try{
+      const res=await fetch(f["@microsoft.graph.downloadUrl"]);
+      const insp=await res.json();
+      results.push(insp);
+    }catch{}
+  }
+  return results;
+}
+
+async function uploadPhotoToOD(inspId,filename,base64data,mimeType){
+  await ensureODToken();
+  await ensureFolder("Inspections App/photos");
+  const cleanName=safePathName(inspId+"_"+filename);
+  const blob=dataUrlToBlob(base64data,mimeType);
+  const res=await uploadBytesToOD("Inspections App/photos/"+cleanName,blob,blob.type);
+  return res?.webUrl || res?.["@microsoft.graph.downloadUrl"] || null;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WORD DOCUMENT EXPORT
+// ═══════════════════════════════════════════════════════════════
+async function exportToWord(insp,template){
+  const {Document,Packer,Paragraph,Table,TableRow,TableCell,TextRun,
+         WidthType,BorderStyle,AlignmentType,HeadingLevel,
+         ShadingType,VerticalAlign,ImageRun}=docx;
+
+  const DARK="#0f172a"; const LIGHT="#f8fafc";
+  const cellShade=(color)=>({type:ShadingType.SOLID,color:color.replace("#",""),fill:color.replace("#","")});
+
+  function hdrCell(text,opts={}){
+    return new TableCell({
+      shading:cellShade("0f172a"),
+      verticalAlign:VerticalAlign.CENTER,
+      children:[new Paragraph({
+        alignment:AlignmentType.CENTER,
+        children:[new TextRun({text,bold:true,color:"FFFFFF",size:18,font:"Calibri"})],
+      })],
+      ...opts,
+    });
+  }
+  function dataCell(text,opts={}){
+    return new TableCell({
+      verticalAlign:VerticalAlign.CENTER,
+      children:[new Paragraph({
+        alignment:opts.center?AlignmentType.CENTER:AlignmentType.LEFT,
+        children:[new TextRun({text:String(text||""),size:18,font:"Calibri"})],
+      })],
+      ...opts,
+    });
+  }
+  function boldDataCell(text,opts={}){
+    return new TableCell({
+      shading:cellShade("f1f5f9"),
+      verticalAlign:VerticalAlign.CENTER,
+      children:[new Paragraph({
+        children:[new TextRun({text:String(text||""),bold:true,size:18,font:"Calibri"})],
+      })],
+      ...opts,
+    });
+  }
+
+  // Title block
+  const titleTable=new Table({
+    width:{size:100,type:WidthType.PERCENTAGE},
+    rows:[new TableRow({children:[
+      new TableCell({
+        shading:cellShade("0f172a"),
+        columnSpan:2,
+        children:[
+          new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:"PORT OF CAPE TOWN",bold:true,color:"FFFFFF",size:28,font:"Calibri"})]}),
+          new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:"ASSET MANAGEMENT INSPECTION REPORT",bold:true,color:"7dd3fc",size:22,font:"Calibri"})]}),
+          new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:"AMP 206: SEWER INFRASTRUCTURE",color:"FFFFFF",size:20,font:"Calibri"})]}),
+          new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:"FINANCIAL YEAR 2025/26",color:"94a3b8",size:18,font:"Calibri"})]}),
+          new Paragraph({alignment:AlignmentType.CENTER,children:[new TextRun({text:"ANNEXURE AMP 206_01",color:"94a3b8",size:18,font:"Calibri"})]}),
+        ],
+      }),
+    ]}),],
+  });
+
+  // Asset details table
+  const assetTable=new Table({
+    width:{size:100,type:WidthType.PERCENTAGE},
+    rows:[
+      new TableRow({children:[
+        hdrCell("ASSET DETAILS",{columnSpan:4}),
+      ]}),
+      new TableRow({children:[
+        boldDataCell("Main Asset Group"),dataCell(template.assetGroup),
+        boldDataCell("Sub Asset Group"),dataCell(template.subAssetGroup),
+      ]}),
+      new TableRow({children:[
+        boldDataCell("Asset"),dataCell(insp.asset,{columnSpan:3}),
+      ]}),
+      new TableRow({children:[
+        boldDataCell("Section"),dataCell(insp.section),
+        boldDataCell("Date"),dataCell(insp.date),
+      ]}),
+    ],
+  });
+
+  // Team table
+  const teamTable=new Table({
+    width:{size:100,type:WidthType.PERCENTAGE},
+    rows:[
+      new TableRow({children:[hdrCell("INSPECTION TEAM"),hdrCell("Name"),hdrCell("Designation")]}),
+      new TableRow({children:[boldDataCell("Team Leader"),dataCell(insp.teamLeader),dataCell(insp.designation)]}),
+    ],
+  });
+
+  // Checklist
+  const checklistRows=[
+    new TableRow({children:[
+      hdrCell("Item"),hdrCell("Description"),hdrCell("Yes",{width:{size:8,type:WidthType.PERCENTAGE}}),
+      hdrCell("No",{width:{size:8,type:WidthType.PERCENTAGE}}),hdrCell("N/A",{width:{size:8,type:WidthType.PERCENTAGE}}),hdrCell("Comments"),
+    ]}),
+  ];
+  let itemNum=1;
+  for(const sec of template.sections){
+    checklistRows.push(new TableRow({children:[
+      new TableCell({shading:cellShade("1e293b"),columnSpan:6,children:[
+        new Paragraph({children:[new TextRun({text:itemNum+". "+sec.title,bold:true,color:"FFFFFF",size:18,font:"Calibri"})]}),
+      ]}),
+    ]}));
+    let subNum=1;
+    for(const item of sec.items){
+      const check=insp.checks?.[item.id]||{};
+      checklistRows.push(new TableRow({children:[
+        dataCell(itemNum+"."+subNum,{center:true,width:{size:6,type:WidthType.PERCENTAGE}}),
+        dataCell(item.text),
+        dataCell(check.answer==="Yes"?"✓":"",{center:true}),
+        dataCell(check.answer==="No"?"✓":"",{center:true}),
+        dataCell(check.answer==="N/A"?"✓":"",{center:true}),
+        dataCell(check.comment||""),
+      ]}));
+      subNum++;
+    }
+    itemNum++;
+  }
+  const checklistTable=new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:checklistRows});
+
+  // Rating scale table
+  const scaleHdrCells=[hdrCell("Rating (%)")];
+  CONDITION_SCALE.forEach(c=>scaleHdrCells.push(hdrCell(c.range[0]+"-"+c.range[1])));
+  const condRow=[boldDataCell("Condition")];
+  CONDITION_SCALE.forEach(c=>condRow.push(dataCell(c.condition,{center:true})));
+  const actionRow=[boldDataCell("Action")];
+  CONDITION_SCALE.forEach(c=>actionRow.push(dataCell(c.action,{center:true})));
+  const repairRow=[boldDataCell("Timeframe for Repairs")];
+  CONDITION_SCALE.forEach(c=>repairRow.push(dataCell(c.repairTime,{center:true})));
+  const maintRow=[boldDataCell("Timeframe for Routine Maint.")];
+  CONDITION_SCALE.forEach(c=>maintRow.push(dataCell(c.maintTime,{center:true})));
+  const scaleTable=new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[
+    new TableRow({children:scaleHdrCells}),
+    new TableRow({children:condRow}),
+    new TableRow({children:actionRow}),
+    new TableRow({children:repairRow}),
+    new TableRow({children:maintRow}),
+  ]});
+
+  // Asset rating table
+  const total=calcWeighted(insp.ratings,template.ratingWeights);
+  const prevTotal=calcWeighted(insp.prevRatings,template.ratingWeights);
+  const ratingRows=[
+    new TableRow({children:[hdrCell(insp.asset||"Pump Station",{columnSpan:5})]}),
+    new TableRow({children:[hdrCell("Item"),hdrCell("Weight (%)"),hdrCell("Previous Rating (%)"),hdrCell("Rating (%)"),hdrCell("Weighted Average (%)")]}),
+  ];
+  for(const w of template.ratingWeights){
+    const val=parseFloat(insp.ratings?.[w.id]);
+    const pval=parseFloat(insp.prevRatings?.[w.id]);
+    const wa=!isNaN(val)?((val*w.weight)/100).toFixed(1):"";
+    ratingRows.push(new TableRow({children:[
+      dataCell(w.label),dataCell(w.weight+"%",{center:true}),
+      dataCell(isNaN(pval)?"":pval+"%",{center:true}),
+      dataCell(isNaN(val)?"":val+"%",{center:true}),
+      dataCell(wa||"",{center:true}),
+    ]}));
+  }
+  ratingRows.push(new TableRow({children:[
+    boldDataCell("TOTAL"),boldDataCell("100%",{center:true}),
+    boldDataCell(prevTotal!=null?prevTotal+"%":"",{center:true}),
+    boldDataCell(""),
+    boldDataCell(total!=null?total+"%":"",{center:true}),
+  ]}));
+  const ratingTable=new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:ratingRows});
+
+  // Photos table
+  const photoRows=[new TableRow({children:[hdrCell("No.",{width:{size:6,type:WidthType.PERCENTAGE}}),hdrCell("Photos"),hdrCell("Comments")]})];
+  const photos=insp.photos||[];
+  for(let i=0;i<photos.length;i++){
+    const ph=photos[i];
+    let imgRun=null;
+    try{
+      const base64=ph.data.split(",")[1];
+      const buf=Uint8Array.from(atob(base64),c=>c.charCodeAt(0));
+      imgRun=new ImageRun({data:buf,transformation:{width:180,height:120},type:"jpg"});
+    }catch{}
+    photoRows.push(new TableRow({children:[
+      dataCell(String(i+1),{center:true,width:{size:6,type:WidthType.PERCENTAGE}}),
+      new TableCell({children:[
+        imgRun?new Paragraph({children:[imgRun]}):new Paragraph({children:[new TextRun({text:"[Image]",color:"94a3b8",size:16})]}),
+        ph.geo?new Paragraph({children:[new TextRun({text:"📍 "+ph.geo,size:14,color:"64748b"})]}):new Paragraph({children:[]}),
+      ]}),
+      dataCell(ph.comment||""),
+    ]}));
+  }
+  if(photos.length===0){
+    photoRows.push(new TableRow({children:[dataCell("—",{center:true,columnSpan:3})]}));
+  }
+  const photosTable=new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:photoRows});
+
+  // Sign-off table
+  const signoffTable=new Table({
+    width:{size:100,type:WidthType.PERCENTAGE},
+    rows:[new TableRow({children:[
+      boldDataCell("Compiled by:"),dataCell(insp.teamLeader||""),
+      boldDataCell("Date:"),dataCell(insp.date||""),
+    ]})],
+  });
+
+  function sp(){return new Paragraph({children:[new TextRun({text:"",size:16})]});}
+  function heading(text){return new Paragraph({heading:HeadingLevel.HEADING_2,children:[new TextRun({text,bold:true,size:22,font:"Calibri",color:"0f172a"})]});}
+
+  const doc=new Document({
+    styles:{paragraphStyles:[{id:"Normal",name:"Normal",run:{font:"Calibri",size:18}}]},
+    sections:[{
+      properties:{page:{margin:{top:720,right:720,bottom:720,left:720}}},
+      children:[
+        titleTable,sp(),
+        heading("ANNEXURE AMP 206_01: ASSET INSPECTION REPORT"),sp(),
+        assetTable,sp(),
+        teamTable,sp(),
+        heading("INSPECTION CHECKLIST"),sp(),
+        checklistTable,sp(),
+        heading("CONDITION RATING"),sp(),
+        new Paragraph({children:[new TextRun({text:"Table 1: General Rating Scale",bold:true,size:18,font:"Calibri"})]}),sp(),
+        scaleTable,sp(),
+        new Paragraph({children:[new TextRun({text:"Table 2: Asset Rating — "+template.subAssetGroup,bold:true,size:18,font:"Calibri"})]}),sp(),
+        ratingTable,sp(),
+        new Paragraph({children:[new TextRun({text:"Note: Condition Rating to be carried over to the summary report.",italics:true,size:16,font:"Calibri",color:"64748b"})]}),sp(),
+        heading("PHOTO CONDITION ASSESSMENT"),sp(),
+        new Paragraph({children:[new TextRun({text:"The condition inspection and assessment indicated below was conducted in "+(insp.date||""),size:18,font:"Calibri"})]}),sp(),
+        photosTable,sp(),
+        heading("INSPECTION SIGN OFF"),sp(),
+        signoffTable,
+      ],
+    }],
+  });
+
+  const blob=await Packer.toBlob(doc);
+  const fname="AMP206_"+( insp.asset||"Inspection").replace(/\s+/g,"_")+"_"+( insp.date||"").replace(/-/g,"")+" .docx";
+  saveAs(blob,fname);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN APP STATE (vanilla JS + DOM rendering via React-like manual approach)
+// We use plain JS + manual DOM since we have no build step.
+// We bring React in for the UI as before.
+// ═══════════════════════════════════════════════════════════════
+</script>
+
+<!-- React -->
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel">
+const {useState,useEffect,useRef,useCallback}=React;
+
+// ── UI primitives ──────────────────────────────────────────────
+function Btn({children,onClick,cls="btn-primary",sm,disabled,style:sx={}}){
+  return <button className={"btn "+(sm?"btn-sm ":"")+cls} onClick={!disabled?onClick:undefined} disabled={disabled} style={sx}>{children}</button>;
+}
+function Field({label,value,onChange,readOnly,placeholder,type="text",cls=""}){
+  return(
+    <div style={{display:"flex",flexDirection:"column",gap:3}}>
+      {label&&<label className="field-label">{label}</label>}
+      <input type={type} className={"field-input "+cls} value={value||""} onChange={e=>onChange&&onChange(e.target.value)} readOnly={readOnly} placeholder={placeholder}/>
+    </div>
+  );
+}
+function RadioPill({value,onChange,disabled}){
+  return(
+    <div className="radio-group">
+      {["Yes","No","N/A"].map(opt=>(
+        <span key={opt} className={"radio-pill"+(value===opt?" active":"")} onClick={()=>!disabled&&onChange&&onChange(opt)}>{opt}</span>
+      ))}
+    </div>
+  );
+}
+function Badge({color,children}){
+  return <span className="badge" style={{background:color+"22",color,border:"1px solid "+color+"55"}}>{children}</span>;
+}
+function Toast({msg,type}){
+  if(!msg)return null;
+  const colors={success:"#15803d",error:"#dc2626",info:"#2563eb",loading:"#7c3aed"};
+  const icon=type==="loading"?"⏳":type==="success"?"✓":type==="error"?"✕":"ℹ";
+  return <div className="toast" style={{borderColor:colors[type]||"#334155"}}>
+    <span style={{color:colors[type]||"#f1f5f9"}}>{icon}</span>{msg}
+  </div>;
+}
+
+// ── OneDrive Setup ─────────────────────────────────────────────
+function ODSetup({onSave,onSkip}){
+  const [clientId,setClientId]=useState("");
+  const [personal,setPersonal]=useState(true);
+  const [testing,setTesting]=useState(false);
+  const [result,setResult]=useState(null);
+
+  async function test(){
+    setTesting(true);setResult(null);
+    try{
+      await odSignIn({clientId:clientId||"YOUR_CLIENT_ID",personal});
+      const me=await odGet("/me");
+      setResult({ok:true,msg:"Connected as: "+me.displayName+" ("+me.mail+")"});
+    }catch(e){setResult({ok:false,msg:e.message});}
+    setTesting(false);
+  }
+
+  const inp={width:"100%",padding:"10px 12px",border:"1px solid #334155",borderRadius:7,fontSize:14,color:"#f1f5f9",background:"#1e293b",outline:"none",fontFamily:"inherit",boxSizing:"border-box"};
+
+  return(
+    <div style={{background:"#0f172a",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:24}}>
+      <div style={{maxWidth:480,width:"100%"}}>
+        <div style={{fontSize:36,marginBottom:12,textAlign:"center"}}>☁️</div>
+        <div style={{color:"#f1f5f9",fontSize:18,fontWeight:700,marginBottom:8,textAlign:"center"}}>Connect to OneDrive</div>
+        <div style={{color:"#94a3b8",fontSize:13,lineHeight:1.8,marginBottom:20}}>
+          Your inspections will be automatically saved to a folder called <b style={{color:"#e2e8f0"}}>Inspections App</b> in your OneDrive. Photos are saved alongside.<br/><br/>
+          You need a free Microsoft account and a one-time Microsoft Azure App Registration (see guide below).
+        </div>
+
+        <div style={{background:"#1e293b",borderRadius:10,padding:16,marginBottom:16}}>
+          <div style={{color:"#7dd3fc",fontSize:11,fontWeight:700,letterSpacing:"0.1em",marginBottom:10}}>AZURE APP REGISTRATION (ONE TIME)</div>
+          <div style={{color:"#94a3b8",fontSize:12,lineHeight:1.9}}>
+            1. Go to <a href="https://portal.azure.com" target="_blank" style={{color:"#7dd3fc"}}>portal.azure.com</a> → App registrations → + New registration<br/>
+            2. Name: <b style={{color:"#e2e8f0"}}>Inspection App</b> · Accounts: <b style={{color:"#e2e8f0"}}>Personal Microsoft accounts only</b><br/>
+            3. Redirect URI → <b style={{color:"#e2e8f0"}}>Single-page application</b>: <code style={{background:"#0f172a",color:"#7dd3fc",padding:"2px 6px",borderRadius:4,wordBreak:"break-all"}}>{window.location.origin}</code><br/>
+            4. Click Register → copy <b style={{color:"#e2e8f0"}}>Application (client) ID</b><br/>
+            5. API permissions → Microsoft Graph → Delegated → add <code style={{background:"#0f172a",color:"#7dd3fc",padding:"2px 6px",borderRadius:4}}>Files.ReadWrite</code> and <code style={{background:"#0f172a",color:"#7dd3fc",padding:"2px 6px",borderRadius:4}}>User.Read</code>
+          </div>
+        </div>
+
+        <div style={{marginBottom:14}}>
+          <label className="field-label" style={{color:"#94a3b8"}}>Application (Client) ID</label>
+          <input style={inp} value={clientId} onChange={e=>setClientId(e.target.value)} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"/>
+        </div>
+        <div style={{marginBottom:20,display:"flex",gap:12,alignItems:"center"}}>
+          <label style={{color:"#94a3b8",fontSize:13,display:"flex",alignItems:"center",gap:6,cursor:"pointer"}}>
+            <input type="checkbox" checked={personal} onChange={e=>setPersonal(e.target.checked)}/> Personal Microsoft account (not work/school)
+          </label>
+        </div>
+
+        {result&&<div style={{padding:"10px 14px",borderRadius:7,background:result.ok?"#1e3a2f":"#3b1111",border:"1px solid "+(result.ok?"#166534":"#991b1b"),color:result.ok?"#86efac":"#fca5a5",fontSize:13,marginBottom:14,wordBreak:"break-all"}}>{result.msg}</div>}
+
+        <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
+          <Btn cls="btn-dark" onClick={test} disabled={testing||!clientId}>{testing?"Testing…":"Test & Sign In"}</Btn>
+          {result?.ok&&<Btn cls="btn-success" onClick={()=>onSave({clientId,personal})}>Save Connection →</Btn>}
+          <Btn cls="btn-ghost" style={{color:"#64748b"}} onClick={onSkip}>Skip — local only</Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Photo Section ──────────────────────────────────────────────
+function PhotoSection({photos=[],onChange,readOnly,inspId}){
+  const fileRef=useRef();
+  const [geoLoading,setGeoLoading]=useState(false);
+
+  function getGeo(){
+    return new Promise((res)=>{
+      if(!navigator.geolocation){res(null);return;}
+      navigator.geolocation.getCurrentPosition(
+        p=>res({lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy}),
+        ()=>res(null),{timeout:8000}
+      );
+    });
+  }
+
+  async function handleFiles(files){
+    setGeoLoading(true);
+    const geo=await getGeo();
+    setGeoLoading(false);
+    const newPhotos=[...photos];
+    for(const file of Array.from(files)){
+      const reader=new FileReader();
+      await new Promise(res=>{reader.onload=e=>{
+        newPhotos.push({
+          id:uid(),
+          name:file.name,
+          data:e.target.result,
+          geo:geo?fmtCoord(geo.lat,geo.lng):null,
+          geoAcc:geo?geo.acc:null,
+          comment:"",
+          timestamp:new Date().toISOString(),
+        });
+        res();
+      };reader.readAsDataURL(file);});
+    }
+    onChange(newPhotos);
+  }
+
+  function updateComment(id,val){
+    onChange(photos.map(p=>p.id===id?{...p,comment:val}:p));
+  }
+  function updateGeo(id,val){
+    onChange(photos.map(p=>p.id===id?{...p,geo:val}:p));
+  }
+  function removePhoto(id){
+    onChange(photos.filter(p=>p.id!==id));
+  }
+  function refreshGeo(id){
+    if(!navigator.geolocation)return;
+    navigator.geolocation.getCurrentPosition(pos=>{
+      const geo=fmtCoord(pos.coords.latitude,pos.coords.longitude);
+      updateGeo(id,geo);
+    },()=>{});
+  }
+
+  return(
+    <div className="card">
+      <div className="card-header">
+        PHOTO CONDITION ASSESSMENT
+        {!readOnly&&<Btn sm cls="btn-primary" onClick={()=>fileRef.current.click()} disabled={geoLoading}>
+          {geoLoading?"Getting location…":"+ Add Photos"}
+        </Btn>}
+      </div>
+      {/* Accept both camera and file picker on mobile; file picker on desktop */}
+      <input ref={fileRef} type="file" accept="image/*" multiple
+        style={{display:"none"}} onChange={e=>handleFiles(e.target.files)}/>
+      <div style={{padding:14}}>
+        {photos.length===0&&<div style={{color:"#94a3b8",fontSize:13,textAlign:"center",padding:"20px 0"}}>No photos yet. Tap + Add Photos to select from files or camera.</div>}
+        {photos.map((ph,i)=>(
+          <div key={ph.id} style={{border:"1px solid #e2e8f0",borderRadius:8,overflow:"hidden",marginBottom:10}}>
+            <div style={{display:"flex",gap:10,padding:10}}>
+              <div style={{flexShrink:0,width:100,height:80,borderRadius:6,overflow:"hidden",background:"#f1f5f9"}}>
+                <img src={ph.data} alt={ph.name} style={{width:"100%",height:"100%",objectFit:"cover"}}/>
+              </div>
+              <div style={{flex:1,display:"flex",flexDirection:"column",gap:6}}>
+                <div style={{fontSize:11,fontWeight:700,color:"#334155"}}>Photo {i+1}: {ph.name}</div>
+                <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+                  <span style={{fontSize:11,color:"#64748b"}}>📍</span>
+                  <input type="text" value={ph.geo||""} onChange={e=>updateGeo(ph.id,e.target.value)}
+                    placeholder="Coordinates (auto or enter manually)"
+                    style={{flex:1,padding:"4px 8px",border:"1px solid #e2e8f0",borderRadius:6,fontSize:12,outline:"none",minWidth:0}}
+                    readOnly={readOnly}/>
+                  {!readOnly&&<button onClick={()=>refreshGeo(ph.id)} style={{background:"#eff6ff",border:"1px solid #bfdbfe",borderRadius:6,padding:"4px 8px",fontSize:11,cursor:"pointer",flexShrink:0}}>📡 Update</button>}
+                </div>
+                {ph.geoAcc&&<div style={{fontSize:10,color:"#94a3b8"}}>Accuracy: ±{Math.round(ph.geoAcc)}m</div>}
+                <input type="text" value={ph.comment||""} onChange={e=>updateComment(ph.id,e.target.value)}
+                  placeholder="Photo comment / description"
+                  style={{padding:"5px 8px",border:"1px solid #e2e8f0",borderRadius:6,fontSize:13,outline:"none"}}
+                  readOnly={readOnly}/>
+              </div>
+              {!readOnly&&<button onClick={()=>removePhoto(ph.id)} style={{background:"none",border:"none",color:"#cbd5e1",fontSize:18,cursor:"pointer",alignSelf:"flex-start"}}>🗑</button>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Inspection Form (tabbed) ───────────────────────────────────
+function InspectionForm({inspection:insp,template,readOnly:ro,onUpdate,onSave,onSubmit,onExport,saving}){
+  const [tab,setTab]=useState("details");
+  function set(f,v){onUpdate({...insp,[f]:v});}
+  function setCheck(iid,field,val){onUpdate({...insp,checks:{...insp.checks,[iid]:{...insp.checks[iid],[field]:val}}});}
+  function setRating(rid,val){onUpdate({...insp,ratings:{...insp.ratings,[rid]:val}});}
+  function setPrevRating(rid,val){onUpdate({...insp,prevRatings:{...insp.prevRatings,[rid]:val}});}
+  const total=calcWeighted(insp.ratings,template.ratingWeights);
+  const prevTotal=calcWeighted(insp.prevRatings,template.ratingWeights);
+  const cond=getCondition(total);
+  const tabs=["details","checklist","rating","photos"];
+
+  return(
+    <div style={{fontFamily:"system-ui,sans-serif",background:"#f0f4f8",minHeight:"100vh"}}>
+      {/* Header */}
+      <div className="sticky-hdr" style={{background:"#0f172a",padding:"12px 14px"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,minWidth:0}}>
+            <button onClick={()=>window.dispatchEvent(new CustomEvent("navBack"))} style={{background:"none",border:"none",color:"#94a3b8",fontSize:22,cursor:"pointer",padding:0,flexShrink:0}}>←</button>
+            <div style={{minWidth:0}}>
+              <div style={{color:"#94a3b8",fontSize:9,textTransform:"uppercase",letterSpacing:"0.15em"}}>{template.name}</div>
+              <div style={{color:"#f1f5f9",fontWeight:700,fontSize:13,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{insp.asset||"New Inspection"}</div>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:5,flexShrink:0,flexWrap:"wrap"}}>
+            {!ro&&<Btn sm cls="btn-dark" onClick={onSave} disabled={saving}>{saving?"⏳":"Save"}</Btn>}
+            {!ro&&!insp.signedOff&&<Btn sm cls="btn-primary" onClick={onSubmit}>Sign Off</Btn>}
+            {ro&&<Btn sm cls="btn-dark" onClick={()=>window.dispatchEvent(new CustomEvent("editInsp"))}>Edit</Btn>}
+            <Btn sm cls="btn-success" onClick={onExport}>⬇ Word</Btn>
+          </div>
+        </div>
+        <div className="tab-bar" style={{background:"transparent",borderBottom:"none",marginBottom:-12}}>
+          {tabs.map(t=><button key={t} className={"tab"+(tab===t?" active":"")} onClick={()=>setTab(t)}>{t.toUpperCase()}</button>)}
+        </div>
+      </div>
+
+      <div style={{padding:"16px 14px",maxWidth:860,margin:"0 auto"}}>
+
+        {/* DETAILS TAB */}
+        {tab==="details"&&<>
+          <div className="card">
+            <div className="card-header">ASSET DETAILS</div>
+            <div className="card-body" style={{display:"flex",flexDirection:"column",gap:12}}>
+              <Field label="Asset Name / Location" value={insp.asset} onChange={v=>set("asset",v)} readOnly={ro} placeholder="e.g. Quay 501/502 sump"/>
+              <Field label="Section" value={insp.section} onChange={v=>set("section",v)} readOnly={ro} placeholder="e.g. Section 4"/>
+              <div className="form-row">
+                <Field label="Inspection Date" type="date" value={insp.date} onChange={v=>set("date",v)} readOnly={ro}/>
+                <Field label="Financial Year" value={insp.financialYear} onChange={v=>set("financialYear",v)} readOnly={ro} placeholder="2025/26"/>
+              </div>
+              <div className="form-row">
+                <Field label="Main Asset Group" value={template.assetGroup} readOnly/>
+                <Field label="Sub Asset Group" value={template.subAssetGroup} readOnly/>
+              </div>
+            </div>
+          </div>
+          <div className="card">
+            <div className="card-header">INSPECTION TEAM</div>
+            <div className="card-body">
+              <div className="form-row">
+                <Field label="Team Leader" value={insp.teamLeader} onChange={v=>set("teamLeader",v)} readOnly={ro} placeholder="Full name"/>
+                <Field label="Designation" value={insp.designation} onChange={v=>set("designation",v)} readOnly={ro} placeholder="e.g. Civil Engineer-In-Training"/>
+              </div>
+            </div>
+          </div>
+          {insp.signedOff&&<div style={{background:"#f0fdf4",border:"1px solid #bbf7d0",borderRadius:10,padding:"12px 16px",display:"flex",gap:12,alignItems:"center"}}>
+            <span style={{fontSize:22}}>✅</span>
+            <div>
+              <div style={{fontWeight:700,color:"#15803d",fontSize:14}}>Signed Off</div>
+              <div style={{color:"#16a34a",fontSize:12}}>By {insp.teamLeader||"Team Leader"} · {insp.signedAt?new Date(insp.signedAt).toLocaleString():""}</div>
+            </div>
+          </div>}
+        </>}
+
+        {/* CHECKLIST TAB */}
+        {tab==="checklist"&&<div className="card">
+          <div className="card-header">INSPECTION CHECKLIST</div>
+          <div style={{padding:14}}>
+            {template.sections.map((sec,si)=>(
+              <div key={sec.id} style={{border:"1px solid #e2e8f0",borderRadius:10,overflow:"hidden",marginBottom:12}}>
+                <div style={{background:"#0f172a",color:"#f1f5f9",padding:"8px 14px",fontSize:12,fontWeight:700,letterSpacing:"0.1em"}}>{si+1}. {sec.title}</div>
+                {sec.items.map((item,ii)=>(
+                  <div key={item.id} style={{padding:"12px 14px",borderBottom:ii<sec.items.length-1?"1px solid #f1f5f9":"none"}}>
+                    <div style={{fontSize:13,color:"#1e293b",marginBottom:8}}><span style={{color:"#94a3b8",marginRight:6,fontWeight:700}}>{si+1}.{ii+1}</span>{item.text}</div>
+                    <RadioPill value={insp.checks?.[item.id]?.answer||""} onChange={v=>setCheck(item.id,"answer",v)} disabled={ro}/>
+                    <input type="text" placeholder="Comments…" readOnly={ro} value={insp.checks?.[item.id]?.comment||""}
+                      onChange={e=>setCheck(item.id,"comment",e.target.value)}
+                      style={{width:"100%",marginTop:8,padding:"7px 10px",border:"1px solid #e2e8f0",borderRadius:6,fontSize:13,color:"#475569",background:ro?"#f8fafc":"#fff",outline:"none",fontFamily:"inherit"}}/>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>}
+
+        {/* RATING TAB */}
+        {tab==="rating"&&<>
+          <div className="card">
+            <div className="card-header">CONDITION RATING</div>
+            <div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:13,minWidth:420}}>
+                <thead>
+                  <tr style={{background:"#f8fafc"}}>
+                    {["Item","Weight","Prev. Rating (%)","Rating (%)","Weighted Avg"].map(h=>(
+                      <th key={h} style={{padding:"8px 10px",textAlign:"left",borderBottom:"1px solid #e2e8f0",color:"#64748b",fontSize:11,fontWeight:700}}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {template.ratingWeights.map(w=>{
+                    const val=parseFloat(insp.ratings?.[w.id]);
+                    const pval=parseFloat(insp.prevRatings?.[w.id]);
+                    const wa=!isNaN(val)?((val*w.weight)/100).toFixed(1):"";
+                    return(
+                      <tr key={w.id} style={{borderBottom:"1px solid #f1f5f9"}}>
+                        <td style={{padding:"8px 10px",color:"#1e293b"}}>{w.label}</td>
+                        <td style={{padding:"8px 10px",color:"#64748b"}}>{w.weight}%</td>
+                        <td style={{padding:"8px 10px"}}>
+                          {ro?<span style={{color:"#64748b"}}>{isNaN(pval)?"—":pval+"%"}</span>
+                            :<input type="number" min="0" max="100" value={insp.prevRatings?.[w.id]||""}
+                              onChange={e=>setPrevRating(w.id,e.target.value)}
+                              placeholder="prev"
+                              style={{width:64,padding:"4px 7px",border:"1px solid #cbd5e1",borderRadius:6,fontSize:13,outline:"none",fontFamily:"inherit"}}/>}
+                        </td>
+                        <td style={{padding:"8px 10px"}}>
+                          {ro?<span>{insp.ratings?.[w.id]||"—"}</span>
+                            :<input type="number" min="0" max="100" value={insp.ratings?.[w.id]||""}
+                              onChange={e=>setRating(w.id,e.target.value)}
+                              style={{width:64,padding:"4px 7px",border:"1px solid #cbd5e1",borderRadius:6,fontSize:13,outline:"none",fontFamily:"inherit"}}/>}
+                        </td>
+                        <td style={{padding:"8px 10px",color:"#64748b"}}>{wa||"—"}</td>
+                      </tr>
+                    );
+                  })}
+                  <tr style={{background:"#f8fafc",fontWeight:700}}>
+                    <td style={{padding:"8px 10px",color:"#0f172a"}}>TOTAL</td>
+                    <td style={{padding:"8px 10px"}}>100%</td>
+                    <td style={{padding:"8px 10px",color:"#64748b"}}>{prevTotal!=null?prevTotal+"%":"—"}</td>
+                    <td></td>
+                    <td style={{padding:"8px 10px"}}>
+                      {total!=null?<span style={{color:cond?.color||"#1e293b",fontWeight:800,fontSize:16}}>{total}%</span>:"—"}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            {cond&&<div style={{padding:"10px 14px",background:cond.color+"11",borderTop:"1px solid "+cond.color+"33",display:"flex",gap:12,alignItems:"center",flexWrap:"wrap"}}>
+              <Badge color={cond.color}>{cond.condition}</Badge>
+              <span style={{fontSize:12,color:"#475569"}}>{cond.action}</span>
+              <span style={{fontSize:11,color:"#94a3b8"}}>Repairs: {cond.repairTime}</span>
+            </div>}
+          </div>
+          {/* Rating scale reference */}
+          <div className="card">
+            <div className="card-header">GENERAL RATING SCALE REFERENCE</div>
+            <div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:600}}>
+                <thead><tr style={{background:"#0f172a"}}>
+                  {["Rating %","Condition","Action","Repair Time","Maint. Time"].map(h=>(
+                    <th key={h} style={{padding:"7px 10px",color:"#f1f5f9",fontWeight:700,textAlign:"left"}}>{h}</th>
+                  ))}
+                </tr></thead>
+                <tbody>
+                  {CONDITION_SCALE.map((c,i)=>(
+                    <tr key={i} style={{background:i%2===0?"#f8fafc":"#fff",borderBottom:"1px solid #e2e8f0"}}>
+                      <td style={{padding:"6px 10px",fontWeight:700,color:c.color}}>{c.range[0]}-{c.range[1]}</td>
+                      <td style={{padding:"6px 10px",color:c.color,fontWeight:600}}>{c.condition}</td>
+                      <td style={{padding:"6px 10px",color:"#475569"}}>{c.action}</td>
+                      <td style={{padding:"6px 10px",color:"#64748b"}}>{c.repairTime}</td>
+                      <td style={{padding:"6px 10px",color:"#64748b"}}>{c.maintTime}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>}
+
+        {/* PHOTOS TAB */}
+        {tab==="photos"&&
+          <PhotoSection photos={insp.photos||[]} onChange={v=>set("photos",v)} readOnly={ro} inspId={insp.id}/>
+        }
+      </div>
+    </div>
+  );
+}
+
+// ── Root App ───────────────────────────────────────────────────
+function App(){
+  const [inspections,setInspections]=useState([]);
+  const [odConfig,setOdConfig]=useState(null);
+  const [odConnected,setOdConnected]=useState(false);
+  const [view,setView]=useState("list");
+  const [current,setCurrent]=useState(null);
+  const [readOnly,setReadOnly]=useState(false);
+  const [saving,setSaving]=useState(false);
+  const [syncing,setSyncing]=useState(false);
+  const [toast,setToast]=useState({msg:"",type:"info"});
+  const [sortBy,setSortBy]=useState("date");
+  const [groupBy,setGroupBy]=useState("none");
+  const [filterInspector,setFilterInspector]=useState("");
+  const tmpl=DEFAULT_TEMPLATE;
+
+  useEffect(()=>{
+    setInspections(lsGet(INSPECTIONS_KEY,[]));
+    const cfg=lsGet(OD_CONFIG_KEY,null);
+    if(cfg){setOdConfig(cfg);_odConfig=cfg;}
+  },[]);
+
+  useEffect(()=>{
+    const back=()=>setView("list");
+    const edit=()=>setReadOnly(false);
+    window.addEventListener("navBack",back);
+    window.addEventListener("editInsp",edit);
+    return()=>{window.removeEventListener("navBack",back);window.removeEventListener("editInsp",edit);};
+  },[]);
+
+  function showToast(msg,type="info",dur=3500){
+    setToast({msg,type});setTimeout(()=>setToast({msg:"",type:"info"}),dur);
+  }
+  function persist(list){setInspections(list);lsSet(INSPECTIONS_KEY,list);}
+
+  function startNew(){
+    setCurrent({
+      id:"insp_"+Date.now(),createdAt:new Date().toISOString(),
+      templateId:tmpl.id,templateName:tmpl.name,
+      asset:"",teamLeader:"",designation:"",
+      date:new Date().toISOString().slice(0,10),
+      section:"",financialYear:"2025/26",
+      checks:emptyChecks(tmpl),ratings:emptyRatings(tmpl),
+      prevRatings:emptyPrevRatings(tmpl),
+      photos:[],signedOff:false,
+    });
+    setReadOnly(false);setView("form");
+  }
+
+  function openInspection(insp){setCurrent({...insp});setReadOnly(true);setView("form");}
+
+  async function saveInspection(){
+    setSaving(true);
+    const upd={...current};
+    const list=[upd,...inspections.filter(i=>i.id!==current.id)];
+    persist(list);
+    setCurrent(upd);
+    if(odConfig&&_odToken){
+      try{await saveInspectionToOD(upd);showToast("Saved to OneDrive ✓","success");}
+      catch(e){showToast("Saved locally. OneDrive: "+e.message,"error");}
+    }else{
+      showToast("Saved locally ✓","success");
+    }
+    setSaving(false);
+  }
+
+  async function submitInspection(){
+    const upd={...current,signedOff:true,signedAt:new Date().toISOString()};
+    const list=[upd,...inspections.filter(i=>i.id!==current.id)];
+    persist(list);
+    if(odConfig&&_odToken){try{await saveInspectionToOD(upd);}catch{}}
+    showToast("Signed off ✓","success");setView("list");
+  }
+
+  async function pullOD(){
+    if(!odConfig){showToast("OneDrive not configured","error");return;}
+    if(!_odToken){
+      showToast("Signing in to OneDrive…","loading",8000);
+      try{await odSignIn(odConfig);setOdConnected(true);}
+      catch(e){showToast("Sign in failed: "+e.message,"error");return;}
+    }
+    setSyncing(true);showToast("Pulling from OneDrive…","loading",10000);
+    try{
+      const remote=await loadInspectionsFromOD();
+      const lm=Object.fromEntries(inspections.map(i=>[i.id,i]));
+      const rm=Object.fromEntries(remote.map(i=>[i.id,i]));
+      persist(Object.values({...lm,...rm}));
+      showToast("Synced "+remote.length+" inspection(s) ✓","success");
+    }catch(e){showToast("Sync failed: "+e.message,"error");}
+    setSyncing(false);
+  }
+
+  async function signInOD(){
+    if(!odConfig)return;
+    showToast("Opening OneDrive sign-in…","loading",8000);
+    try{await odSignIn(odConfig);setOdConnected(true);showToast("OneDrive connected ✓","success");}
+    catch(e){showToast("Sign in failed: "+e.message,"error");}
+  }
+
+  async function handleExport(){
+    try{
+      showToast("Generating Word document…","loading",8000);
+      await exportToWord(current,tmpl);
+      showToast("Word document downloaded ✓","success");
+    }catch(e){showToast("Export failed: "+e.message,"error");}
+  }
+
+  function deleteInsp(id){if(confirm("Delete this inspection?"))persist(inspections.filter(i=>i.id!==id));}
+
+  // ── Sorting & Grouping ──
+  const sortOptions=[
+    {key:"date",label:"Date"},
+    {key:"inspector",label:"Inspector"},
+    {key:"asset",label:"Asset"},
+    {key:"rating",label:"Rating"},
+    {key:"status",label:"Status"},
+  ];
+  const groupOptions=[
+    {key:"none",label:"No Grouping"},
+    {key:"inspector",label:"By Inspector"},
+    {key:"section",label:"By Section"},
+    {key:"status",label:"By Status"},
+    {key:"date",label:"By Month"},
+  ];
+
+  function sortedInspections(){
+    let list=[...inspections];
+    if(filterInspector)list=list.filter(i=>(i.teamLeader||"").toLowerCase().includes(filterInspector.toLowerCase()));
+    list.sort((a,b)=>{
+      if(sortBy==="date") return (b.date||"").localeCompare(a.date||"");
+      if(sortBy==="inspector") return (a.teamLeader||"").localeCompare(b.teamLeader||"");
+      if(sortBy==="asset") return (a.asset||"").localeCompare(b.asset||"");
+      if(sortBy==="rating"){
+        const ra=calcWeighted(a.ratings,tmpl.ratingWeights)||0;
+        const rb=calcWeighted(b.ratings,tmpl.ratingWeights)||0;
+        return rb-ra;
+      }
+      if(sortBy==="status") return (b.signedOff?1:0)-(a.signedOff?1:0);
+      return 0;
+    });
+    return list;
+  }
+
+  function groupedInspections(){
+    const list=sortedInspections();
+    if(groupBy==="none") return [["",list]];
+    const map=new Map();
+    list.forEach(insp=>{
+      let key="";
+      if(groupBy==="inspector") key=insp.teamLeader||"Unknown";
+      else if(groupBy==="section") key=insp.section||"No Section";
+      else if(groupBy==="status") key=insp.signedOff?"Signed Off":"Draft";
+      else if(groupBy==="date") key=insp.date?(insp.date.slice(0,7)):("No Date");
+      if(!map.has(key))map.set(key,[]);
+      map.get(key).push(insp);
+    });
+    return Array.from(map.entries()).sort((a,b)=>a[0].localeCompare(b[0]));
+  }
+
+  // ── VIEWS ──
+  if(view==="odSetup") return <ODSetup onSave={cfg=>{lsSet(OD_CONFIG_KEY,cfg);setOdConfig(cfg);_odConfig=cfg;setView("list");showToast("OneDrive configured ✓","success");}} onSkip={()=>setView("list")}/>;
+
+  if(view==="form") return(
+    <>
+      <InspectionForm
+        inspection={current} template={tmpl}
+        readOnly={readOnly} onUpdate={setCurrent}
+        onSave={saveInspection} onSubmit={submitInspection}
+        onExport={handleExport} saving={saving}
+      />
+      <Toast {...toast}/>
+    </>
+  );
+
+  // ── LIST VIEW ──
+  const groups=groupedInspections();
+  const allInspectors=[...new Set(inspections.map(i=>i.teamLeader).filter(Boolean))];
+
+  return(
+    <div style={{fontFamily:"system-ui,sans-serif",background:"#f0f4f8",minHeight:"100vh"}}>
+      {/* Header */}
+      <div style={{background:"#0f172a",padding:"16px 14px"}}>
+        <div style={{color:"#94a3b8",fontSize:10,letterSpacing:"0.2em",textTransform:"uppercase",marginBottom:4}}>Asset Management · AMP 206</div>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
+          <h1 style={{color:"#f1f5f9",margin:0,fontSize:18,fontWeight:700}}>Sewer Inspections</h1>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"flex-end"}}>
+            {!odConfig
+              ?<Btn sm cls="btn-orange" onClick={()=>setView("odSetup")}>☁️ OneDrive</Btn>
+              :!odConnected
+                ?<Btn sm cls="btn-dark" onClick={signInOD}>☁️ Sign In</Btn>
+                :<Btn sm cls="btn-dark" onClick={pullOD} disabled={syncing}>{syncing?"…":"↓ Sync"}</Btn>
+            }
+            <Btn sm cls="btn-primary" onClick={startNew}>+ New</Btn>
+          </div>
+        </div>
+        {odConfig&&(
+          <div className="od-bar">
+            <span style={{fontSize:11,color:odConnected?"#86efac":"#fbbf24"}}>{odConnected?"● OneDrive connected":"● OneDrive configured — tap Sign In"}</span>
+            <button onClick={()=>{lsSet(OD_CONFIG_KEY,null);setOdConfig(null);setOdConnected(false);showToast("Disconnected","info");}} style={{background:"none",border:"none",color:"#64748b",fontSize:11,cursor:"pointer",textDecoration:"underline"}}>Disconnect</button>
+          </div>
+        )}
+      </div>
+
+      <div style={{padding:"14px"}}>
+        {/* Sort & Group */}
+        <div className="card" style={{marginBottom:12}}>
+          <div className="card-header">SORT & FILTER</div>
+          <div className="card-body" style={{display:"flex",flexDirection:"column",gap:10}}>
+            <div>
+              <div className="field-label" style={{marginBottom:6}}>Sort by</div>
+              <div className="sort-bar" style={{marginBottom:0}}>
+                {sortOptions.map(o=><span key={o.key} className={"sort-pill"+(sortBy===o.key?" active":"")} onClick={()=>setSortBy(o.key)}>{o.label}</span>)}
+              </div>
+            </div>
+            <div>
+              <div className="field-label" style={{marginBottom:6}}>Group by</div>
+              <div className="sort-bar" style={{marginBottom:0}}>
+                {groupOptions.map(o=><span key={o.key} className={"sort-pill"+(groupBy===o.key?" active":"")} onClick={()=>setGroupBy(o.key)}>{o.label}</span>)}
+              </div>
+            </div>
+            <div>
+              <div className="field-label" style={{marginBottom:4}}>Filter by inspector</div>
+              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                <input type="text" value={filterInspector} onChange={e=>setFilterInspector(e.target.value)}
+                  placeholder="Type inspector name…"
+                  style={{flex:1,padding:"7px 10px",border:"1px solid #e2e8f0",borderRadius:7,fontSize:13,outline:"none",minWidth:120}}/>
+                {allInspectors.map(n=>(
+                  <span key={n} className={"sort-pill"+(filterInspector===n?" active":"")} onClick={()=>setFilterInspector(filterInspector===n?"":n)} style={{cursor:"pointer"}}>{n}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {inspections.length===0?(
+          <div style={{textAlign:"center",color:"#94a3b8",padding:"60px 0",fontSize:14}}>
+            <div style={{fontSize:40,marginBottom:12}}>📋</div>
+            No inspections yet.<br/>Tap <strong>+ New</strong> to start.
+          </div>
+        ):(
+          groups.map(([groupKey,items])=>(
+            <div key={groupKey}>
+              {groupBy!=="none"&&<div className="group-header">{groupKey} ({items.length})</div>}
+              {items.map(insp=>{
+                const total=calcWeighted(insp.ratings,tmpl.ratingWeights);
+                const prevTotal=calcWeighted(insp.prevRatings,tmpl.ratingWeights);
+                const cond=getCondition(total);
+                const filled=Object.values(insp.checks||{}).filter(c=>c.answer).length;
+                const totalItems=Object.keys(insp.checks||{}).length;
+                return(
+                  <div key={insp.id} className="insp-card" onClick={()=>openInspection(insp)}>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4,flexWrap:"wrap"}}>
+                        <span style={{fontWeight:700,color:"#0f172a",fontSize:14}}>{insp.asset||"Untitled"}</span>
+                        {insp.signedOff?<Badge color="#16a34a">Done</Badge>:<Badge color="#ca8a04">Draft</Badge>}
+                        {(insp.photos||[]).length>0&&<Badge color="#7c3aed">📷 {insp.photos.length}</Badge>}
+                      </div>
+                      <div style={{color:"#64748b",fontSize:12,display:"flex",gap:8,flexWrap:"wrap"}}>
+                        <span>📅 {insp.date||"—"}</span>
+                        <span>👤 {insp.teamLeader||"—"}</span>
+                        {insp.section&&<span>📍 {insp.section}</span>}
+                        <span>{filled}/{totalItems} items</span>
+                      </div>
+                      {prevTotal!=null&&<div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>Prev: {prevTotal}%</div>}
+                    </div>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      {total!=null&&<div style={{textAlign:"center"}}>
+                        <div style={{fontSize:20,fontWeight:800,color:cond?.color||"#1e293b"}}>{total}%</div>
+                        <div style={{fontSize:9,color:"#94a3b8"}}>{cond?.condition}</div>
+                      </div>}
+                      <button onClick={e=>{e.stopPropagation();deleteInsp(insp.id);}} style={{background:"none",border:"none",color:"#cbd5e1",fontSize:16,cursor:"pointer",padding:4}}>🗑</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))
+        )}
+      </div>
+      <Toast {...toast}/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+
+<script>
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js?v=10")
+    .then(r=>console.log("SW registered",r.scope))
+    .catch(e=>console.warn("SW failed",e));
+}
+</script>
+</body>
+</html>
