@@ -146,7 +146,7 @@ function odAuthority(cfg){
 }
 
 function getMsal(cfg){
-  if(!cfg?.clientId || cfg.clientId === "YOUR_CLIENT_ID") throw new Error("Enter your real Microsoft Application (Client) ID first.");
+  if(!cfg?.clientId || cfg.clientId === "6b6fa530-0197-4e16-a43d-09c36cfd5532") throw new Error("Enter your real Microsoft Application (Client) ID first.");
   const key = JSON.stringify({clientId:cfg.clientId,personal:!!cfg.personal,origin:window.location.origin});
   if(_msalInstance && _msalInstance.__key === key) return _msalInstance;
   _msalInstance = new msal.PublicClientApplication({
@@ -638,7 +638,7 @@ function ODSetup({onSave,onSkip}){
   async function test(){
     setTesting(true);setResult(null);
     try{
-      await odSignIn({clientId:clientId||"YOUR_CLIENT_ID",personal});
+      await odSignIn({clientId:clientId||"6b6fa530-0197-4e16-a43d-09c36cfd5532",personal});
       const me=await odGet("/me");
       setResult({ok:true,msg:"Connected as: "+me.displayName+" ("+me.mail+")"});
     }catch(e){setResult({ok:false,msg:e.message});}
