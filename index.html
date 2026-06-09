@@ -216,7 +216,7 @@ function gdScopes(){
 async function gdSignIn(cfg){
   _gdConfig=cfg;
   await ensureGisLoaded();
-  if(!cfg?.clientId || cfg.clientId === "YOUR_GOOGLE_CLIENT_ID") throw new Error("Enter your real Google OAuth Client ID first.");
+  if(!cfg?.clientId || cfg.clientId === "761850558497-76ro2sd8df0bsgst8hovibj244bullh3.apps.googleusercontent.com") throw new Error("Enter your real Google OAuth Client ID first.");
   return new Promise((resolve,reject)=>{
     const client=window.google.accounts.oauth2.initTokenClient({
       client_id:cfg.clientId,
@@ -567,7 +567,7 @@ function GDSetup({onSave,onSkip}){
   async function test(){
     setTesting(true);setResult(null);
     try{
-      await gdSignIn({clientId:clientId||"YOUR_GOOGLE_CLIENT_ID"});
+      await gdSignIn({clientId:clientId||"761850558497-76ro2sd8df0bsgst8hovibj244bullh3.apps.googleusercontent.com"});
       setResult({ok:true,msg:"Connected as: "+(_gdUser?.name||"Inspector")+" ("+(_gdUser?.email||"")+"). Folder created/shared in Google Drive."});
     }catch(e){setResult({ok:false,msg:e.message});}
     setTesting(false);
