@@ -4,7 +4,7 @@ const SCOPES='https://www.googleapis.com/auth/drive https://www.googleapis.com/a
 const DB='asset_inspection_persistent_db_v8';
 const ROOT_FOLDER='Inspection App';
 const APP_PROP='assetInspectionApp';
-let db, tokenClient, accessToken=null, user=null, rootFolderId=null, inspectorFolderId=null, autosaveTimer=null, installPrompt=null;
+let db, tokenClient, accessToken=null, user=null, rootFolderId=null, inspectorFolderId=null, autosaveTimer=null, installPrompt=null, googleAuthLoading=null;
 let templates=[], editingTemplateId=null, state=newBlankInspection();
 const $=id=>document.getElementById(id);
 const safe=s=>(s||'').toString().replace(/[\\/:*?"<>|]+/g,'-').trim().slice(0,90)||'Untitled';
@@ -34,7 +34,50 @@ function compressImage(file){return new Promise((res,rej)=>{const img=new Image(
 function getGeo(force=false){return new Promise(resolve=>{if(!navigator.geolocation)return resolve(null);navigator.geolocation.getCurrentPosition(p=>{const c=`${p.coords.latitude.toFixed(6)}, ${p.coords.longitude.toFixed(6)}`; if(force||!$('coordinates').value){$('coordinates').value=c; state.coordinates=c; queueSave();} resolve({lat:p.coords.latitude,lng:p.coords.longitude,accuracy:p.coords.accuracy});},()=>resolve(null),{enableHighAccuracy:true,timeout:9000,maximumAge:300000});});}
 async function addPhotos(){const files=[...$('photoInput').files]; if(!files.length)return; const geo=await getGeo(false); for(const f of files){state.photos.push({id:crypto.randomUUID(),name:safe(f.name||'photo')+'.jpg',dataUrl:await compressImage(f),section:'',comment:'',lat:geo?.lat||'',lng:geo?.lng||'',accuracy:geo?.accuracy||'',takenAt:new Date().toISOString(),fileId:null});} $('photoInput').value=''; renderPhotos(); await saveDevice(); if(accessToken&&navigator.onLine) await syncCurrent(false);}
 function renderPhotos(){const el=$('photoList'); el.innerHTML=''; state.photos.forEach((p,i)=>{const d=document.createElement('div'); d.className='photo'; d.innerHTML=`<img src="${p.dataUrl}"><div><b>Photo ${i+1}</b><label>Section/group<input data-psec="${p.id}" value="${p.section||''}" placeholder="e.g. Section 4 Pump Stations"></label><label>Comment<textarea data-pcom="${p.id}">${p.comment||''}</textarea></label><div class="small">${p.lat?p.lat+', '+p.lng:'No GPS stored for this photo'}</div></div><button class="danger" data-pdel="${p.id}">Remove</button>`; el.appendChild(d);}); el.querySelectorAll('[data-psec]').forEach(x=>x.oninput=e=>{state.photos.find(p=>p.id===e.target.dataset.psec).section=e.target.value; queueSave();}); el.querySelectorAll('[data-pcom]').forEach(x=>x.oninput=e=>{state.photos.find(p=>p.id===e.target.dataset.pcom).comment=e.target.value; queueSave();}); el.querySelectorAll('[data-pdel]').forEach(x=>x.onclick=async e=>{state.photos=state.photos.filter(p=>p.id!==e.target.dataset.pdel); renderPhotos(); await saveDevice();});}
-async function initAuth(){if(!window.google?.accounts?.oauth2){alert('Google sign-in needs internet. Try again when online.');return;} tokenClient=google.accounts.oauth2.initTokenClient({client_id:GOOGLE_CLIENT_ID,scope:SCOPES,callback:async r=>{if(r.error){log('Google auth failed: '+r.error);return;} accessToken=r.access_token; await loadUser(); await ensureDriveBase(); $('btnSignOut').disabled=false; await syncPending();}}); tokenClient.requestAccessToken({prompt:'consent'});}
+function loadScriptOnce(src, test){
+  if(test()) return Promise.resolve();
+  if(googleAuthLoading) return googleAuthLoading;
+  googleAuthLoading=new Promise((resolve,reject)=>{
+    const existing=[...document.scripts].find(s=>s.src===src);
+    const script=existing||document.createElement('script');
+    const done=()=>test()?resolve():reject(new Error('Required Google sign-in library did not initialise.'));
+    script.onload=done;
+    script.onerror=()=>reject(new Error('Could not load Google sign-in. Check your connection and that accounts.google.com is not blocked.'));
+    if(!existing){script.src=src; script.async=true; script.defer=true; document.head.appendChild(script);} else {setTimeout(done,300);}
+    setTimeout(done,3500);
+  });
+  return googleAuthLoading;
+}
+async function initAuth(){
+  try{
+    $('authStatus').textContent='Opening Google sign-in...';
+    $('authStatus').className='pill';
+    await loadScriptOnce('https://accounts.google.com/gsi/client',()=>!!window.google?.accounts?.oauth2);
+    if(!tokenClient){
+      tokenClient=google.accounts.oauth2.initTokenClient({client_id:GOOGLE_CLIENT_ID,scope:SCOPES,callback:async r=>{
+        try{
+          if(r.error){throw new Error(r.error_description||r.error);}
+          accessToken=r.access_token;
+          await loadUser();
+          await ensureDriveBase();
+          $('btnSignOut').disabled=false;
+          await syncPending();
+        }catch(e){
+          $('authStatus').textContent='Sign-in failed';
+          $('authStatus').className='pill bad';
+          log('Google auth failed: '+e.message);
+          alert('Google sign-in failed: '+e.message);
+        }
+      }});
+    }
+    tokenClient.requestAccessToken({prompt:'consent'});
+  }catch(e){
+    $('authStatus').textContent='Google sign-in unavailable';
+    $('authStatus').className='pill bad';
+    log('Google sign-in unavailable: '+e.message);
+    alert(e.message);
+  }
+}
 async function loadUser(){const r=await fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+accessToken}}); user=await r.json(); $('authStatus').textContent=`Signed in: ${user.email}`; $('authStatus').className='pill'; if(!$('teamLeader').value)$('teamLeader').value=user.name||''; log('Signed in as '+user.email);}
 async function gfetch(url,opt={}){const r=await fetch(url,{...opt,headers:{...(opt.headers||{}),Authorization:'Bearer '+accessToken}}); if(!r.ok)throw new Error((await r.text()).slice(0,500)); return r;}
 async function findFolder(name,parent){let q=`mimeType='application/vnd.google-apps.folder' and trashed=false and name='${String(name).replace(/'/g,"\\'")}'`; if(parent)q+=` and '${parent}' in parents`; const url='https://www.googleapis.com/drive/v3/files?q='+encodeURIComponent(q)+'&fields=files(id,name,webViewLink)&spaces=drive'; const data=await (await gfetch(url)).json(); return data.files?.[0]||null;}

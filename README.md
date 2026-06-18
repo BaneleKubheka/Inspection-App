@@ -53,3 +53,9 @@ Templates are no longer separate JSON files. They are managed inside the app und
 
 ## Mobile use
 Install the app to the phone home screen from the browser. The app is mobile-first and works offline after the first load. Google Drive sync requires internet and sign-in.
+
+
+## Fix in this version
+- Google sign-in no longer fails just because the Google identity script has not finished loading. The app now loads and waits for the Google sign-in library when the button is clicked.
+- The service worker no longer intercepts/caches external Google scripts or Drive API calls. It only caches app files from the same site, which avoids false offline/sign-in failures.
+- Service worker cache version bumped to force deployed devices to refresh.
