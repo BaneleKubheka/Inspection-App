@@ -1,10 +1,5 @@
 {
   "name": "asset-inspection-app",
-  "version": "4.0.0",
-  "private": true,
-  "description": "Offline-first asset inspection PWA for Cloudflare Pages with Pages Functions and Google Drive sync. No build step required.",
-  "scripts": {
-    "dev": "npx wrangler pages dev public --compatibility-date=2026-06-18"
-  },
-  "devDependencies": {}
+  "version": "3.0.0",
+  "private": true
 }
