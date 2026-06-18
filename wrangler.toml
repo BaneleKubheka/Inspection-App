@@ -1,0 +1,8 @@
+name = "inspection-app"
+compatibility_date = "2026-06-18"
+pages_build_output_dir = "public"
+
+[vars]
+GOOGLE_CLIENT_ID = "761850558497-il9ofceonaktmb7d02ior4n4qk5koqs7.apps.googleusercontent.com"
+DRIVE_ROOT_FOLDER_NAME = "Inspection App"
+APP_BASE_URL = "https://inspection-app.banelekubheka45-1.workers.dev"

@@ -1,0 +1,1 @@
+export async function onRequest(){return new Response(JSON.stringify({ok:true}),{headers:{'Content-Type':'application/json','Set-Cookie':'IA_AUTH=; Path=/; Secure; HttpOnly; SameSite=Lax; Max-Age=0'}})}
