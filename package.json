@@ -1,7 +1,4 @@
 {
   "name": "asset-inspection-app",
   "version": "3.0.0",
-  "private": true,
-  "scripts": {"deploy":"wrangler pages deploy public --project-name inspection-app","dev":"wrangler pages dev public --compatibility-date=2026-06-18"},
-  "devDependencies": {"wrangler":"latest"}
 }
