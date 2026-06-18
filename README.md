@@ -1,18 +1,55 @@
 # Asset Inspection App
 
-Static deployable web app. Upload the folder contents to Netlify, Cloudflare Pages, GitHub Pages, or any static host.
-
-## Required Google setting
-The Google OAuth Web Client ID is already built into `index.html` as `761850558497-il9ofceonaktmb7d02ior4n4qk5koqs7.apps.googleusercontent.com`. In Google Cloud Console, make sure your deployed URL is added under **Authorized JavaScript origins** for this same OAuth client.
-
-## Included
-- Google sign-in and Drive upload
-- Per-inspector Google Drive folder reuse
-- Draft autosave to Drive including compressed photos
-- Editable infrastructure templates
-- Unlimited photo capture/selection with compression
-- AMP-style DOCX export and completed-report upload
-
+Deploy this folder as a static web app on Netlify, Cloudflare Pages, GitHub Pages, or any HTTPS static host.
 
 ## Built-in Google Client ID
-This build contains the supplied OAuth Web Client ID, so inspectors do not need to paste it into the app. The deployment URL still has to be authorised in Google Cloud Console for this OAuth client.
+The app already includes this Google OAuth Web Client ID:
+
+`761850558497-il9ofceonaktmb7d02ior4n4qk5koqs7.apps.googleusercontent.com`
+
+In Google Cloud Console, the deployed site URL must still be added under **Authorised JavaScript origins**.
+
+## Storage and upload structure
+The app saves drafts locally first using IndexedDB persistent storage. This includes:
+
+- inspection form data
+- selected template
+- checklist answers
+- ratings
+- photo comments
+- compressed photos
+- GPS/location information
+- generated DOCX draft status
+- Drive upload queue status
+
+When the device is online and the user is signed in, the app uploads to Google Drive using this structure:
+
+```text
+Inspection App/
+  inspector-email@example.com/
+    2026-06-18 - Asset Name - abc12345/
+      inspection-data.json
+      locations.json
+      draft-inspection-report.docx
+      completed-inspection-report.docx
+      photos/
+        001-photo.jpg
+        002-photo.jpg
+```
+
+If the inspection was completed offline, the folder is created and uploaded when internet access and Google sign-in are restored.
+
+## Templates
+Templates are no longer separate JSON files. They are managed inside the app under **Template Manager**. You can:
+
+- create a new asset template
+- duplicate an existing template
+- rename templates
+- edit report headings and asset group defaults
+- add/remove checklist sections
+- add/remove checklist questions
+- add/remove rating items and weights
+- deploy any saved template to a new inspection from the Inspection tab
+
+## Mobile use
+Install the app to the phone home screen from the browser. The app is mobile-first and works offline after the first load. Google Drive sync requires internet and sign-in.
